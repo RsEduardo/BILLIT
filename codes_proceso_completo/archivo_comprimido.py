@@ -3,11 +3,14 @@ import zipfile
 import fitz  # PyMuPDF
 import shutil
 import openpyxl
+import sys
 
-UPLOAD_FOLDER = os.path.abspath("")
-
-# Ruta de la carpeta principal donde se encuentran las subcarpetas
-folder_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
+# Aceptar ruta de carpeta como argumento
+if len(sys.argv) > 1:
+    folder_path = sys.argv[1]
+else:
+    UPLOAD_FOLDER = os.path.abspath("")
+    folder_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 
 # Lista de archivos a excluir
 excluir_archivos = [

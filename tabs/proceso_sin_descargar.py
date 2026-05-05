@@ -57,12 +57,12 @@ def run(subfolder):
             try:
                 # Directorio donde están ubicados los scripts
                 UPLOAD_FOLDER = os.path.abspath("codes_proceso_completo")
-                # Ruta relativa del script ejecutar_downloand.py en la carpeta "codes_proceso_completo"
+                # Ruta relativa del script ejecutar_sin_descarga.py en la carpeta "codes_proceso_completo"
                 fixed_script_path = os.path.join(UPLOAD_FOLDER, 'ejecutar_sin_descarga.py')
 
-                # Iniciar el script en un subproceso desde la carpeta "codes_proceso_completo"
+                # Iniciar el script en un subproceso pasando la carpeta padre (archivos_usuarios)
                 process = subprocess.Popen(
-                    [sys.executable, fixed_script_path, subfolder_path],
+                    [sys.executable, fixed_script_path, subfolder],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
                 )
 
