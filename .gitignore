@@ -1,0 +1,14 @@
+.venv/
+*.pyc
+__pycache__/
+
+.vscode/
+
+.local_settings.py
+
+uploads/
+.env/
+
+archivos_usuarios/*.zip
+archivos_usuarios/*.tar.gz
+DeepSeek-R1/
