@@ -37,6 +37,10 @@ def run(subfolder):
             subfolder_path = os.path.join(subfolder, timestamp)
             os.makedirs(subfolder_path, exist_ok=True)
 
+            print(f"[DEBUG] subfolder (raiz archivos_usuarios) = {os.path.abspath(subfolder)}", flush=True)
+            print(f"[DEBUG] subfolder_path (carpeta timestamp) = {os.path.abspath(subfolder_path)}", flush=True)
+            print(f"[DEBUG] cwd del proceso streamlit = {os.getcwd()}", flush=True)
+
             # Guardar cada archivo PDF en la subcarpeta creada
             for uploaded_file in uploaded_files:
                 file_path = os.path.join(subfolder_path, uploaded_file.name)
@@ -60,6 +64,10 @@ def run(subfolder):
                 # Ruta relativa del script ejecutar_sin_descarga.py en la carpeta "codes_proceso_completo"
                 fixed_script_path = os.path.join(UPLOAD_FOLDER, 'ejecutar_sin_descarga.py')
 
+                print(f"[DEBUG] script a ejecutar = {fixed_script_path}", flush=True)
+                print(f"[DEBUG] existe? = {os.path.isfile(fixed_script_path)}", flush=True)
+                print(f"[DEBUG] argumento folder_path pasado al subproceso = {subfolder}", flush=True)
+
                 # Iniciar el script en un subproceso pasando la carpeta padre (archivos_usuarios)
                 process = subprocess.Popen(
                     [sys.executable, fixed_script_path, subfolder],
@@ -74,6 +82,7 @@ def run(subfolder):
                     # Leer la salida estándar del proceso en tiempo real
                     for line in iter(process.stdout.readline, ''):
                         line = line.strip()
+                        print(f"[SUBPROCESO] {line}", flush=True)
                         if "Start:" in line:
                             pass
                         elif "End:" in line:
@@ -85,6 +94,8 @@ def run(subfolder):
 
                     # Verificar la salida del proceso al finalizar
                     stdout, stderr = process.communicate()
+                    print(f"[SUBPROCESO-END] returncode={process.returncode}", flush=True)
+                    print(f"[SUBPROCESO-END] stderr={stderr}", flush=True)
                     if process.returncode == 0:
                         st.success('Los archivos fueron procesados con éxito')
                         st.text(stdout)
@@ -92,6 +103,10 @@ def run(subfolder):
                         # Buscar el archivo .zip generado en la carpeta
                         zip_filename = f"{timestamp}.zip"
                         zip_filepath = os.path.join(subfolder, zip_filename)
+
+                        print(f"[DEBUG] buscando zip en = {os.path.abspath(zip_filepath)}", flush=True)
+                        print(f"[DEBUG] existe el zip? = {os.path.exists(zip_filepath)}", flush=True)
+                        print(f"[DEBUG] listado de archivos_usuarios = {os.listdir(subfolder)}", flush=True)
 
                         if os.path.exists(zip_filepath):
                             with open(zip_filepath, "rb") as f:

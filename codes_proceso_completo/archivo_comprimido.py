@@ -12,6 +12,10 @@ else:
     UPLOAD_FOLDER = os.path.abspath("")
     folder_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 
+print(f"[DEBUG] archivo_comprimido cwd = {os.getcwd()}", flush=True)
+print(f"[DEBUG] archivo_comprimido folder_path = {folder_path}", flush=True)
+print(f"[DEBUG] contenido de folder_path = {os.listdir(folder_path)}", flush=True)
+
 # Lista de archivos a excluir
 excluir_archivos = [
     'Cuenta_contable.xlsx',
@@ -63,6 +67,8 @@ for subfolder in os.listdir(folder_path):
     if os.path.isdir(subfolder_path):
         # Ruta del archivo zip que se va a crear con el mismo nombre de la subcarpeta
         zip_file_path = os.path.join(folder_path, f'{subfolder}.zip')
+        print(f"[DEBUG] procesando subcarpeta = {subfolder_path}", flush=True)
+        print(f"[DEBUG] zip a crear = {zip_file_path}", flush=True)
         
         with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             # Recopilar y ordenar los archivos (.xls, .xlsx, luego .pdf)
