@@ -33,6 +33,7 @@ def update_progress(progress):
         f.write(str(progress))
 
 total_scripts = len(scripts)
+progress_percentage = 0
 for index, script in enumerate(scripts):
     script_path = os.path.join(UPLOAD_FOLDER, script)
     
