@@ -30,15 +30,12 @@ def run(subfolder):
 
     if st.button('Procesar Archivos'):
         if dian_file and sinco_file and cuentas_file:
-            # Obtener la fecha y hora actuales para crear una subcarpeta única
             now = datetime.now()
             timestamp = now.strftime("%Y%m%d_%H%M%S")
 
-            # Crear una subcarpeta en 'archivos_usuarios' con el nombre basado en la fecha y hora
             subfolder_path = os.path.join(subfolder, timestamp)
             os.makedirs(subfolder_path, exist_ok=True)
 
-            # Guardar los archivos subidos en la subcarpeta creada
             dian_path = os.path.join(subfolder_path, 'DIAN.xlsx')
             sinco_path = os.path.join(subfolder_path, 'SINCO.xlsx')
             cuentas_path = os.path.join(subfolder_path, 'MovDocCuenta_CSV.csv')
@@ -50,48 +47,37 @@ def run(subfolder):
             with open(cuentas_path, 'wb') as f:
                 f.write(cuentas_file.getbuffer())
 
-            # Crear la barra de progreso
             st.markdown('<style>div[data-testid="stProgress"] { height: 24px; }</style>', unsafe_allow_html=True)
             progress_bar = st.progress(0)
 
             try:
-                # Directorio donde están ubicados los scripts
                 UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
-                # Ruta relativa del script ejecutar_complet.py en la carpeta "codes_proceso_completo"
                 fixed_script_path = os.path.abspath("codes_proceso_completo/ejecutar_complet.py")
 
-                # Inicia el script en un subproceso desde la carpeta fija
                 process = subprocess.Popen(
                     [sys.executable, fixed_script_path, dian_path, sinco_path, cuentas_path],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
                 )
 
-                # Número total de scripts para calcular el progreso
                 total_scripts = 8
                 completed_scripts = 0
 
                 with st.spinner('Procesando...'):
-                    # Lee la salida estándar del proceso en tiempo real
                     for line in iter(process.stdout.readline, ''):
                         line = line.strip()
                         if "Start:" in line:
-                            # No hacer nada en el inicio, solo leer la línea
                             pass
                         elif "End:" in line:
                             completed_scripts += 1
                             progress = completed_scripts / total_scripts
                             progress_bar.progress(progress)
 
-                    # Espera a que el proceso termine
                     process.wait()
+                    process.communicate()
 
-                    # Verificar la salida del proceso al finalizar
-                    stdout, stderr = process.communicate()
                     if process.returncode == 0:
-                        st.success('El script se ejecutó con éxito')
-                        st.text(stdout)
+                        st.success('Los archivos fueron procesados con éxito')
 
-                        # Buscar el archivo .zip generado en la carpeta 'archivos_usuarios'
                         zip_filename = f"{timestamp}.zip"
                         zip_filepath = os.path.join(subfolder, zip_filename)
 
@@ -104,12 +90,10 @@ def run(subfolder):
                                     mime='application/zip'
                                 )
                         else:
-                            st.error(f'No se encontró el archivo {zip_filename}')
+                            st.error('Ocurrió un error en el sistema, comuníquese con soporte')
                     else:
-                        st.error(f'Error al ejecutar el script: {stderr}')
-                        st.text(stderr)
+                        st.error('Ocurrió un error en el sistema, comuníquese con soporte')
             except Exception as e:
-                st.error(f'Error al ejecutar el script: {str(e)}')
+                st.error('Ocurrió un error en el sistema, comuníquese con soporte')
         else:
             st.error('Todos los archivos deben ser seleccionados')
-

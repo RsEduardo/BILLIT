@@ -14,11 +14,6 @@ else:
 
 timestamp_filter = sys.argv[2] if len(sys.argv) > 2 else None
 
-print(f"[DEBUG] archivo_comprimido cwd = {os.getcwd()}", flush=True)
-print(f"[DEBUG] archivo_comprimido folder_path = {folder_path}", flush=True)
-print(f"[DEBUG] timestamp_filter = {timestamp_filter}", flush=True)
-print(f"[DEBUG] contenido de folder_path = {os.listdir(folder_path)}", flush=True)
-
 # Lista de archivos a excluir
 excluir_archivos = [
     'Cuenta_contable.xlsx',
@@ -65,13 +60,8 @@ def aplicar_filtro_y_inmovilizar_xlsx(file_path):
 # Determinar qué subcarpetas procesar
 if timestamp_filter:
     subcarpetas_a_procesar = [timestamp_filter]
-    print(f"[DEBUG] Modo filtrado: solo procesar subcarpeta {timestamp_filter}", flush=True)
 else:
     subcarpetas_a_procesar = [d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, d))]
-    print(f"[DEBUG] Modo general: procesar todas las subcarpetas {subcarpetas_a_procesar}", flush=True)
-
-procesadas_exitosamente = 0
-errores = []
 
 # Recorrer las subcarpetas a procesar
 for subfolder in subcarpetas_a_procesar:
@@ -79,14 +69,11 @@ for subfolder in subcarpetas_a_procesar:
     
     # Verificar que sea una subcarpeta
     if not os.path.isdir(subfolder_path):
-        print(f"[DEBUG] Saltando {subfolder}: no es un directorio", flush=True)
         continue
     
     try:
         # Ruta del archivo zip que se va a crear con el mismo nombre de la subcarpeta
         zip_file_path = os.path.join(folder_path, f'{subfolder}.zip')
-        print(f"[DEBUG] procesando subcarpeta = {subfolder_path}", flush=True)
-        print(f"[DEBUG] zip a crear = {zip_file_path}", flush=True)
         
         with zipfile.ZipFile(zip_file_path, 'w') as zipf:
             # Recopilar y ordenar los archivos (.xls, .xlsx, luego .pdf)
@@ -138,13 +125,8 @@ for subfolder in subcarpetas_a_procesar:
 
         # Eliminar la subcarpeta original
         shutil.rmtree(subfolder_path)
-        procesadas_exitosamente += 1
-        print(f"[DEBUG] Subcarpeta {subfolder} procesada exitosamente", flush=True)
 
     except Exception as e:
-        error_msg = f"Error procesando subcarpeta {subfolder}: {str(e)}"
-        print(f"[ERROR] {error_msg}", flush=True)
-        errores.append(error_msg)
         # Si se creó un zip parcial, eliminarlo
         zip_file_path_parcial = os.path.join(folder_path, f'{subfolder}.zip')
         if os.path.exists(zip_file_path_parcial):
@@ -152,9 +134,3 @@ for subfolder in subcarpetas_a_procesar:
                 os.remove(zip_file_path_parcial)
             except:
                 pass
-
-print(f'Se procesaron {procesadas_exitosamente} de {len(subcarpetas_a_procesar)} subcarpetas en: {folder_path}')
-if errores:
-    print(f'[ERRORES] {len(errores)} subcarpetas fallaron:', flush=True)
-    for err in errores:
-        print(f'  - {err}', flush=True)

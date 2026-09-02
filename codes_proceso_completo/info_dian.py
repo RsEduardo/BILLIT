@@ -39,7 +39,6 @@ def buscar_variables(documento):
             texto = page.get_text("text")
             texto_completo += texto + "\n"
         except Exception as e:
-            print(f"[WARN] No se pudo leer la página {page_num} del PDF: {e}", flush=True)
             continue
         
         # Recorrer cada variable en el texto
@@ -211,7 +210,6 @@ def procesar_pdf(ruta_pdf):
 
         return variables_encontradas, descripcion, tipo_documento, ref_factura
     except Exception as e:
-        print(f"[ERROR] No se pudo procesar el PDF {os.path.basename(ruta_pdf)}: {e}", flush=True)
         return None
 
 UPLOAD_FOLDER = os.path.abspath("")
@@ -223,13 +221,9 @@ todas_las_subcarpetas = [os.path.join(base_archivos_usuarios, d) for d in os.lis
 # Filtrar por timestamp si se proporciona
 if timestamp_filter:
     subcarpetas = [s for s in todas_las_subcarpetas if os.path.basename(s) == timestamp_filter]
-    print(f"[DEBUG] info_dian: filtrando por timestamp {timestamp_filter}", flush=True)
 else:
     subcarpetas = todas_las_subcarpetas
 
-print(f"[DEBUG] info_dian: subcarpetas a procesar = {[os.path.basename(s) for s in subcarpetas]}", flush=True)
-
-# Asegurarse de que hay subcarpetas disponibles
 if not subcarpetas:
     raise ValueError("No se encontraron subcarpetas dentro de la carpeta 'archivos_usuarios'.")
 
@@ -237,8 +231,6 @@ if not subcarpetas:
 for subcarpeta in subcarpetas:
     # Obtener todos los archivos PDF en la subcarpeta actual
     archivos_pdf = [os.path.join(subcarpeta, archivo) for archivo in os.listdir(subcarpeta) if archivo.endswith('.pdf')]
-
-    print(f"[DEBUG] info_dian: {len(archivos_pdf)} PDFs en {os.path.basename(subcarpeta)}", flush=True)
 
     # Lista para almacenar los datos extraídos de cada PDF
     datos = []
@@ -262,7 +254,6 @@ for subcarpeta in subcarpetas:
         referencias_factura.append(ref_factura)
 
     if not datos:
-        print(f"[WARN] Ningún PDF pudo ser procesado en {subcarpeta}", flush=True)
         continue
 
     # Crear un DataFrame con los datos extraídos

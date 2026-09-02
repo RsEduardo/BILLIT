@@ -6,14 +6,8 @@ import os
 folder_path = sys.argv[1] if len(sys.argv) > 1 else None
 timestamp_filter = sys.argv[2] if len(sys.argv) > 2 else None
 
-print(f"[DEBUG] ejecutar_sin_descarga cwd = {os.getcwd()}", flush=True)
-print(f"[DEBUG] folder_path (argv[1]) = {folder_path}", flush=True)
-print(f"[DEBUG] timestamp_filter (argv[2]) = {timestamp_filter}", flush=True)
-
 # Directorio donde están ubicados los scripts
 UPLOAD_FOLDER = os.path.abspath(os.path.join("", "codes_proceso_completo"))
-
-print(f"[DEBUG] UPLOAD_FOLDER (scripts) = {UPLOAD_FOLDER}", flush=True)
 
 # Lista de scripts a ejecutar en orden
 scripts = [
@@ -41,7 +35,6 @@ for index, script in enumerate(scripts):
         print(f"Archivo no encontrado: {script_path}")
         break
     
-    print(f"[DEBUG] ejecutando {os.path.abspath(script_path)} (existe={os.path.isfile(script_path)})", flush=True)
     try:
         # Imprime el inicio de la ejecución
         print(f"Start: {script}", flush=True)
@@ -62,7 +55,6 @@ for index, script in enumerate(scripts):
         # Imprime el final de la ejecución
         print(f"End: {script}", flush=True)
         print(f"Ejecutado {script_path} con éxito")
-        print(result.stdout, flush=True)
         
         # Actualiza el progreso
         progress_percentage = ((index + 1) / total_scripts) * 100

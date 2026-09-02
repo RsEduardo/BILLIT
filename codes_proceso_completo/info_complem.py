@@ -20,9 +20,6 @@ subcarpetas = [
 # Filtrar por timestamp si se proporciona
 if timestamp_filter:
     subcarpetas = [s for s in subcarpetas if os.path.basename(s) == timestamp_filter]
-    print(f"[DEBUG] info_complem: filtrando por timestamp {timestamp_filter}", flush=True)
-
-print(f"[DEBUG] info_complem: subcarpetas a procesar = {[os.path.basename(s) for s in subcarpetas]}", flush=True)
 
 # Asegúrate de que hay subcarpetas disponibles
 if not subcarpetas:
