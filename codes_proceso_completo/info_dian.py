@@ -33,8 +33,12 @@ def buscar_variables(documento):
 
     # Procesar cada página del documento
     for page_num in range(documento.page_count):
-        page = documento.load_page(page_num)
-        texto = page.get_text("text")
+        try:
+            page = documento.load_page(page_num)
+            texto = page.get_text("text")
+        except Exception as e:
+            print(f"[WARN] No se pudo leer la página {page_num} del PDF: {e}", flush=True)
+            continue
         
         # Recorrer cada variable en el texto
         for variable in variables:
@@ -183,27 +187,31 @@ def ajustar_total_bruto_factura(df):
 
 def procesar_pdf(ruta_pdf):
     """Función para procesar un solo PDF y devolver los datos extraídos"""
-    # Abrir el archivo PDF
-    documento = fitz.open(ruta_pdf)
+    try:
+        # Abrir el archivo PDF
+        documento = fitz.open(ruta_pdf)
 
-    # Buscar las variables en el documento
-    variables_encontradas = buscar_variables(documento)
+        # Buscar las variables en el documento
+        variables_encontradas = buscar_variables(documento)
 
-    # Cerrar el documento PDF
-    documento.close()
+        # Cerrar el documento PDF
+        documento.close()
 
-    # Extraer el texto del PDF para otras operaciones
-    texto = extraer_texto(ruta_pdf)
-    descripcion = extraer_primera_descripcion(texto)
-    tipo_documento = extraer_tipo_documento(texto)
-    ref_factura = extraer_ref_factura(texto) if tipo_documento == "Nota Crédito" else ""
+        # Extraer el texto del PDF para otras operaciones
+        texto = extraer_texto(ruta_pdf)
+        descripcion = extraer_primera_descripcion(texto)
+        tipo_documento = extraer_tipo_documento(texto)
+        ref_factura = extraer_ref_factura(texto) if tipo_documento == "Nota Crédito" else ""
 
-    # Convertir valores numéricos
-    for key in ["Nit del Emisor:", "Total Bruto Factura", "Total neto factura (=)", "Total factura (=)", "IVA", "INC", "Rete fuente"]:
-        if variables_encontradas.get(key) is not None:
-            variables_encontradas[key] = convertir_a_numero(variables_encontradas[key])
+        # Convertir valores numéricos
+        for key in ["Nit del Emisor:", "Total Bruto Factura", "Total neto factura (=)", "Total factura (=)", "IVA", "INC", "Rete fuente"]:
+            if variables_encontradas.get(key) is not None:
+                variables_encontradas[key] = convertir_a_numero(variables_encontradas[key])
 
-    return variables_encontradas, descripcion, tipo_documento, ref_factura
+        return variables_encontradas, descripcion, tipo_documento, ref_factura
+    except Exception as e:
+        print(f"[ERROR] No se pudo procesar el PDF {os.path.basename(ruta_pdf)}: {e}", flush=True)
+        return None
 
 UPLOAD_FOLDER = os.path.abspath("")
 
@@ -228,12 +236,19 @@ for subcarpeta in subcarpetas:
     with ThreadPoolExecutor() as executor:
         resultados = executor.map(procesar_pdf, archivos_pdf)
 
-    # Procesar los resultados
-    for variables_encontradas, descripcion, tipo_documento, ref_factura in resultados:
+    # Procesar los resultados (filtrar PDFs que fallaron)
+    for resultado in resultados:
+        if resultado is None:
+            continue
+        variables_encontradas, descripcion, tipo_documento, ref_factura = resultado
         datos.append(variables_encontradas)
         descripciones.append(descripcion)
         tipos_documentos.append(tipo_documento)
         referencias_factura.append(ref_factura)
+
+    if not datos:
+        print(f"[WARN] Ningún PDF pudo ser procesado en {subcarpeta}", flush=True)
+        continue
 
     # Crear un DataFrame con los datos extraídos
     df = pd.DataFrame(datos)
