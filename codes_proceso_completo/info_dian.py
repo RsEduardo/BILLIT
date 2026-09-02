@@ -1,6 +1,6 @@
 import os
+import sys
 import fitz  # PyMuPDF
-import PyPDF2
 import pandas as pd
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -32,10 +32,12 @@ def buscar_variables(documento):
     }
 
     # Procesar cada página del documento
+    texto_completo = ""
     for page_num in range(documento.page_count):
         try:
             page = documento.load_page(page_num)
             texto = page.get_text("text")
+            texto_completo += texto + "\n"
         except Exception as e:
             print(f"[WARN] No se pudo leer la página {page_num} del PDF: {e}", flush=True)
             continue
@@ -84,7 +86,7 @@ def buscar_variables(documento):
                 # Asignar el valor encontrado
                 variables[variable] = valor
 
-    return variables
+    return variables, texto_completo
 
 
 
@@ -191,14 +193,13 @@ def procesar_pdf(ruta_pdf):
         # Abrir el archivo PDF
         documento = fitz.open(ruta_pdf)
 
-        # Buscar las variables en el documento
-        variables_encontradas = buscar_variables(documento)
+        # Buscar las variables en el documento y extraer todo el texto
+        variables_encontradas, texto = buscar_variables(documento)
 
         # Cerrar el documento PDF
         documento.close()
 
-        # Extraer el texto del PDF para otras operaciones
-        texto = extraer_texto(ruta_pdf)
+        # Extraer metadatos del texto
         descripcion = extraer_primera_descripcion(texto)
         tipo_documento = extraer_tipo_documento(texto)
         ref_factura = extraer_ref_factura(texto) if tipo_documento == "Nota Crédito" else ""
@@ -214,8 +215,19 @@ def procesar_pdf(ruta_pdf):
         return None
 
 UPLOAD_FOLDER = os.path.abspath("")
+timestamp_filter = sys.argv[1] if len(sys.argv) > 1 else None
 
-subcarpetas = [os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d) for d in os.listdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios")) if os.path.isdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d))]
+base_archivos_usuarios = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
+todas_las_subcarpetas = [os.path.join(base_archivos_usuarios, d) for d in os.listdir(base_archivos_usuarios) if os.path.isdir(os.path.join(base_archivos_usuarios, d))]
+
+# Filtrar por timestamp si se proporciona
+if timestamp_filter:
+    subcarpetas = [s for s in todas_las_subcarpetas if os.path.basename(s) == timestamp_filter]
+    print(f"[DEBUG] info_dian: filtrando por timestamp {timestamp_filter}", flush=True)
+else:
+    subcarpetas = todas_las_subcarpetas
+
+print(f"[DEBUG] info_dian: subcarpetas a procesar = {[os.path.basename(s) for s in subcarpetas]}", flush=True)
 
 # Asegurarse de que hay subcarpetas disponibles
 if not subcarpetas:
@@ -226,6 +238,8 @@ for subcarpeta in subcarpetas:
     # Obtener todos los archivos PDF en la subcarpeta actual
     archivos_pdf = [os.path.join(subcarpeta, archivo) for archivo in os.listdir(subcarpeta) if archivo.endswith('.pdf')]
 
+    print(f"[DEBUG] info_dian: {len(archivos_pdf)} PDFs en {os.path.basename(subcarpeta)}", flush=True)
+
     # Lista para almacenar los datos extraídos de cada PDF
     datos = []
     descripciones = []
@@ -233,7 +247,8 @@ for subcarpeta in subcarpetas:
     referencias_factura = []
 
     # Ejecutar la extracción de información en paralelo
-    with ThreadPoolExecutor() as executor:
+    max_workers = os.cpu_count() or 4
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         resultados = executor.map(procesar_pdf, archivos_pdf)
 
     # Procesar los resultados (filtrar PDFs que fallaron)

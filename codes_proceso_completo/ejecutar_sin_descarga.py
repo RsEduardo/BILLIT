@@ -46,14 +46,18 @@ for index, script in enumerate(scripts):
         # Imprime el inicio de la ejecución
         print(f"Start: {script}", flush=True)
         
-        # Si es archivo_comprimido.py, pasarle la ruta de la carpeta y el timestamp
+        # Construir argumentos según el script
+        # archivo_comprimido.py espera: folder_path [timestamp]
+        # Los demás scripts esperan: [timestamp]
         if script == 'archivo_comprimido.py' and folder_path:
             args = [sys.executable, script_path, folder_path]
             if timestamp_filter:
                 args.append(timestamp_filter)
-            result = subprocess.run(args, check=True, capture_output=True, text=True)
         else:
-            result = subprocess.run([sys.executable, script_path], check=True, capture_output=True, text=True)
+            args = [sys.executable, script_path]
+            if timestamp_filter:
+                args.append(timestamp_filter)
+        result = subprocess.run(args, check=True, capture_output=True, text=True)
         
         # Imprime el final de la ejecución
         print(f"End: {script}", flush=True)

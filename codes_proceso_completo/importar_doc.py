@@ -5,14 +5,23 @@ from xlutils.copy import copy
 import re
 import os
 import shutil
+import sys
 
 UPLOAD_FOLDER = os.path.abspath("")
 
 # Define la ruta base de la carpeta archivos_usuarios
 base_folder = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
+timestamp_filter = sys.argv[1] if len(sys.argv) > 1 else None
 
 # Obtiene todas las subcarpetas dentro de archivos_usuarios
 subcarpetas = [f.path for f in os.scandir(base_folder) if f.is_dir()]
+
+# Filtrar por timestamp si se proporciona
+if timestamp_filter:
+    subcarpetas = [s for s in subcarpetas if os.path.basename(s) == timestamp_filter]
+    print(f"[DEBUG] importar_doc: filtrando por timestamp {timestamp_filter}", flush=True)
+
+print(f"[DEBUG] importar_doc: subcarpetas a procesar = {[os.path.basename(s) for s in subcarpetas]}", flush=True)
 
 # Nombre del archivo de referencia que se debe copiar
 file_name_importar = "doc_importar.xls"

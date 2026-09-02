@@ -1,11 +1,16 @@
 import pandas as pd
 import os
+import sys
 
 # Ruta principal
 base_folder = os.path.join(os.path.abspath(""), "archivos_usuarios")
+timestamp_filter = sys.argv[1] if len(sys.argv) > 1 else None
 
 # Iterar sobre las subcarpetas dentro de 'archivos_usuarios'
 for subdir, dirs, files in os.walk(base_folder):
+    # Filtrar por timestamp si se proporciona
+    if timestamp_filter and os.path.basename(subdir) != timestamp_filter:
+        continue
     # Verificar si existe el archivo CSV en la subcarpeta actual
     file_path_csv = os.path.join(subdir, "MovDocCuenta_CSV.csv")
     if os.path.exists(file_path_csv):

@@ -3,10 +3,12 @@ import pandas as pd
 import xlrd
 import xlwt
 from xlutils.copy import copy
+import sys
 
 # Define la carpeta principal
 UPLOAD_FOLDER = os.path.abspath("")
 base_folder = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
+timestamp_filter = sys.argv[1] if len(sys.argv) > 1 else None
 
 # Obtiene todas las subcarpetas dentro de "archivos_usuarios"
 subcarpetas = [
@@ -14,6 +16,13 @@ subcarpetas = [
     for d in os.listdir(base_folder) 
     if os.path.isdir(os.path.join(base_folder, d))
 ]
+
+# Filtrar por timestamp si se proporciona
+if timestamp_filter:
+    subcarpetas = [s for s in subcarpetas if os.path.basename(s) == timestamp_filter]
+    print(f"[DEBUG] info_complem: filtrando por timestamp {timestamp_filter}", flush=True)
+
+print(f"[DEBUG] info_complem: subcarpetas a procesar = {[os.path.basename(s) for s in subcarpetas]}", flush=True)
 
 # Asegúrate de que hay subcarpetas disponibles
 if not subcarpetas:
