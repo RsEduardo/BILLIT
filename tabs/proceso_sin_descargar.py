@@ -78,11 +78,13 @@ def run(subfolder):
                 # Número total de scripts para calcular el progreso
                 total_scripts = 5
                 completed_scripts = 0
+                all_output = []
 
                 with st.spinner('Procesando...'):
                     # Leer la salida estándar del proceso en tiempo real
                     for line in iter(process.stdout.readline, ''):
                         line = line.strip()
+                        all_output.append(line)
                         print(f"[SUBPROCESO] {line}", flush=True)
                         if "Start:" in line:
                             pass
@@ -95,11 +97,12 @@ def run(subfolder):
 
                     # Verificar la salida del proceso al finalizar
                     stdout, stderr = process.communicate()
+                    full_output = "\n".join(all_output)
                     print(f"[SUBPROCESO-END] returncode={process.returncode}", flush=True)
                     print(f"[SUBPROCESO-END] stderr={stderr}", flush=True)
                     if process.returncode == 0:
                         st.success('Los archivos fueron procesados con éxito')
-                        st.text(stdout)
+                        st.text(full_output)
 
                         # Buscar el archivo .zip generado en la carpeta
                         zip_filename = f"{timestamp}.zip"
@@ -120,8 +123,9 @@ def run(subfolder):
                         else:
                             st.error(f'No se encontró el archivo {zip_filename}')
                     else:
-                        st.error(f'Error al procesar los archivos: {stderr}')
-                        st.text(stderr)
+                        error_detail = stderr if stderr else full_output
+                        st.error(f'Error al procesar los archivos')
+                        st.text(error_detail)
             except Exception as e:
                 st.error(f'Error al procesar los archivos: {str(e)}')
         else:
