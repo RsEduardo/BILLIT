@@ -5,15 +5,18 @@ import shutil
 import openpyxl
 import sys
 
-# Aceptar ruta de carpeta como argumento
+# Aceptar ruta de carpeta y timestamp específico como argumentos
 if len(sys.argv) > 1:
     folder_path = sys.argv[1]
 else:
     UPLOAD_FOLDER = os.path.abspath("")
     folder_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 
+timestamp_filter = sys.argv[2] if len(sys.argv) > 2 else None
+
 print(f"[DEBUG] archivo_comprimido cwd = {os.getcwd()}", flush=True)
 print(f"[DEBUG] archivo_comprimido folder_path = {folder_path}", flush=True)
+print(f"[DEBUG] timestamp_filter = {timestamp_filter}", flush=True)
 print(f"[DEBUG] contenido de folder_path = {os.listdir(folder_path)}", flush=True)
 
 # Lista de archivos a excluir
@@ -59,12 +62,27 @@ def aplicar_filtro_y_inmovilizar_xlsx(file_path):
             worksheet.freeze_panes = worksheet['A2']  # Inmovilizar la primera fila (todo lo anterior a A2)
     workbook.save(file_path)
 
-# Recorrer todas las subcarpetas en "archivos_usuarios"
-for subfolder in os.listdir(folder_path):
+# Determinar qué subcarpetas procesar
+if timestamp_filter:
+    subcarpetas_a_procesar = [timestamp_filter]
+    print(f"[DEBUG] Modo filtrado: solo procesar subcarpeta {timestamp_filter}", flush=True)
+else:
+    subcarpetas_a_procesar = [d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, d))]
+    print(f"[DEBUG] Modo general: procesar todas las subcarpetas {subcarpetas_a_procesar}", flush=True)
+
+procesadas_exitosamente = 0
+errores = []
+
+# Recorrer las subcarpetas a procesar
+for subfolder in subcarpetas_a_procesar:
     subfolder_path = os.path.join(folder_path, subfolder)
     
     # Verificar que sea una subcarpeta
-    if os.path.isdir(subfolder_path):
+    if not os.path.isdir(subfolder_path):
+        print(f"[DEBUG] Saltando {subfolder}: no es un directorio", flush=True)
+        continue
+    
+    try:
         # Ruta del archivo zip que se va a crear con el mismo nombre de la subcarpeta
         zip_file_path = os.path.join(folder_path, f'{subfolder}.zip')
         print(f"[DEBUG] procesando subcarpeta = {subfolder_path}", flush=True)
@@ -106,11 +124,13 @@ for subfolder in os.listdir(folder_path):
                 # Buscar las variables en el documento
                 variables_encontradas = buscar_variables(documento)
 
-                # Cerrar el documento PDF
+                # Cerrar el documento
                 documento.close()
 
                 # Construir el nuevo nombre de archivo
-                nuevo_nombre = f"{variables_encontradas['Número de Factura:']}_{variables_encontradas['Razón Social:']}.pdf"
+                numero_factura = variables_encontradas.get('Número de Factura:') or 'SIN_NUMERO'
+                razon_social = variables_encontradas.get('Razón Social:') or 'SIN_RAZON'
+                nuevo_nombre = f"{numero_factura}_{razon_social}.pdf"
                 nuevo_nombre = nuevo_nombre.replace("/", "-")  # Reemplazar '/' por '-' para evitar problemas en el nombre del archivo
 
                 # Añadir el archivo PDF al zip con el nuevo nombre
@@ -118,5 +138,23 @@ for subfolder in os.listdir(folder_path):
 
         # Eliminar la subcarpeta original
         shutil.rmtree(subfolder_path)
+        procesadas_exitosamente += 1
+        print(f"[DEBUG] Subcarpeta {subfolder} procesada exitosamente", flush=True)
 
-print(f'Se han creado archivos zip para todas las subcarpetas en: {folder_path}, y las subcarpetas originales han sido eliminadas.')
+    except Exception as e:
+        error_msg = f"Error procesando subcarpeta {subfolder}: {str(e)}"
+        print(f"[ERROR] {error_msg}", flush=True)
+        errores.append(error_msg)
+        # Si se creó un zip parcial, eliminarlo
+        zip_file_path_parcial = os.path.join(folder_path, f'{subfolder}.zip')
+        if os.path.exists(zip_file_path_parcial):
+            try:
+                os.remove(zip_file_path_parcial)
+            except:
+                pass
+
+print(f'Se procesaron {procesadas_exitosamente} de {len(subcarpetas_a_procesar)} subcarpetas en: {folder_path}')
+if errores:
+    print(f'[ERRORES] {len(errores)} subcarpetas fallaron:', flush=True)
+    for err in errores:
+        print(f'  - {err}', flush=True)

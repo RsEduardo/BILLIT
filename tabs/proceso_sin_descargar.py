@@ -67,10 +67,11 @@ def run(subfolder):
                 print(f"[DEBUG] script a ejecutar = {fixed_script_path}", flush=True)
                 print(f"[DEBUG] existe? = {os.path.isfile(fixed_script_path)}", flush=True)
                 print(f"[DEBUG] argumento folder_path pasado al subproceso = {subfolder}", flush=True)
+                print(f"[DEBUG] argumento timestamp pasado al subproceso = {timestamp}", flush=True)
 
-                # Iniciar el script en un subproceso pasando la carpeta padre (archivos_usuarios)
+                # Iniciar el script en un subproceso pasando la carpeta padre y el timestamp
                 process = subprocess.Popen(
-                    [sys.executable, fixed_script_path, subfolder],
+                    [sys.executable, fixed_script_path, subfolder, timestamp],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
                 )
 

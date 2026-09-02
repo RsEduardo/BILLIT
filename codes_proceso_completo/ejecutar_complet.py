@@ -66,6 +66,10 @@ for index, script in enumerate(scripts):
         print(e.stderr, flush=True)
         break  # Detener la ejecución si hay un error
 
+# Si el último script no se ejecutó correctamente (progreso < 100%), salir con error
+if progress_percentage < 100:
+    sys.exit(1)
+
 # Si todo termina con éxito, asegurar que el progreso llegue al 100%
 update_progress(100)
 
